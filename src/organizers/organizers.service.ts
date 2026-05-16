@@ -1,0 +1,1 @@
+export { OrganizersService } from '../modules/organizers/application/organizers.service';

@@ -1,0 +1,1 @@
+export { EventTableResponseDto } from '../../modules/tables/contracts/responses/event-table-response.dto';

@@ -1,0 +1,1 @@
+export { TableResponseDto } from '../../modules/tables/contracts/responses/table-response.dto';

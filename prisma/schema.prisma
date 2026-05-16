@@ -1,0 +1,1039 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminActionStatus {
+  SUCCEEDED
+  REJECTED
+  FAILED
+
+  @@map("admin_action_status")
+}
+
+enum UserRole {
+  CUSTOMER
+  ORGANIZER
+  GATE_STAFF
+  ADMIN
+
+  @@map("user_role")
+}
+
+enum SessionStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+
+  @@map("session_status")
+}
+
+enum AuthAuditAction {
+  SIGNUP
+  LOGIN
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  REFRESH
+  REFRESH_SUCCESS
+  REFRESH_FAILED
+  REFRESH_REPLAY_DETECTED
+  SESSION_REVOKED
+  ME_ACCESSED
+  AUTH_FAILURE
+  EXPIRED_SESSION_DETECTED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_COMPLETED
+  EMAIL_VERIFICATION_REQUESTED
+  EMAIL_VERIFIED
+
+  @@map("auth_audit_action")
+}
+
+enum OrganizerStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  SUSPENDED
+  REJECTED
+
+  @@map("organizer_status")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  ARCHIVED
+
+  @@map("event_status")
+}
+
+enum EventVisibility {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+
+  @@map("event_visibility")
+}
+
+enum EventCategory {
+  NIGHTLIFE
+  CONCERT
+  FESTIVAL
+  CAMPUS
+  CORPORATE
+  COMMUNITY
+  SPORTS
+  ARTS
+  OTHER
+
+  @@map("event_category")
+}
+
+enum OrderStatus {
+  CREATED
+  RESERVED
+  PAYMENT_PENDING
+  PAID
+  FULFILLED
+  COMPLETED
+  EXPIRED
+  FAILED
+  CANCELLED
+
+  @@map("order_status")
+}
+
+enum PaymentStatus {
+  INITIATED
+  PENDING
+  SUCCESS
+  FAILED
+  REVERSED
+  REFUNDED
+
+  @@map("payment_status")
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  MTN_MOMO
+
+  @@map("payment_provider")
+}
+
+enum PaymentIntentStatus {
+  INITIATION_PENDING
+  INITIATED
+  INITIATION_FAILED
+  VERIFIED
+  FAILED
+
+  @@map("payment_intent_status")
+}
+
+enum WebhookProcessingStatus {
+  RECEIVED
+  VERIFIED
+  REJECTED
+  DUPLICATE
+  PROCESSED
+  FAILED
+
+  @@map("webhook_processing_status")
+}
+
+enum TicketStatus {
+  ISSUED
+  ACTIVE
+  USED
+  EXITED
+  INVALIDATED
+  REFUNDED
+  BLOCKED
+  VOIDED
+  EXPIRED
+
+  @@map("ticket_status")
+}
+
+enum AdmissionScanStatus {
+  ACCEPTED
+  REJECTED
+
+  @@map("admission_scan_status")
+}
+
+enum AdmissionRejectionReason {
+  INVALID_TOKEN
+  TICKET_NOT_FOUND
+  TICKET_NOT_ISSUED
+  TICKET_VOIDED
+  TICKET_EXPIRED
+  TICKET_ALREADY_USED
+  EVENT_NOT_ACTIVE
+  EVENT_MISMATCH
+  ORGANIZER_MISMATCH
+  TOKEN_REPLAY_DETECTED
+  STAFF_NOT_AUTHORIZED
+
+  @@map("admission_rejection_reason")
+}
+
+enum ReservationStatus {
+  HELD
+  EXPIRED
+  CONSUMED
+  CANCELLED
+}
+
+enum VenueTableStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+
+  @@map("venue_table_status")
+}
+
+enum EventTableStatus {
+  AVAILABLE
+  HELD
+  UNAVAILABLE
+
+  @@map("event_table_status")
+}
+
+enum TableReservationStatus {
+  HELD
+  EXPIRED
+  CANCELLED
+
+  @@map("table_reservation_status")
+}
+
+enum TableAuditEvent {
+  VENUE_TABLE_CREATED
+  VENUE_TABLE_UPDATED
+  EVENT_TABLE_CREATED
+  EVENT_TABLE_UPDATED
+  TABLE_HOLD_CREATED
+  TABLE_HOLD_EXPIRED
+  TABLE_HOLD_CANCELLED
+  TABLE_RESERVATION_REJECTED
+
+  @@map("table_audit_event")
+}
+
+enum AdmissionState {
+  NOT_USED
+  INSIDE
+  EXITED
+  REJECTED
+  BLOCKED
+
+  @@map("admission_state")
+}
+
+enum AdmissionDirection {
+  ENTRY
+  EXIT
+
+  @@map("scan_direction")
+}
+
+enum AdmissionEventResult {
+  ACCEPTED
+  REJECTED
+  CONFLICT_DUPLICATE_OFFLINE_ENTRY
+  CONFLICT_EXIT_WITHOUT_ENTRY
+  CONFLICT_ALREADY_CONSUMED_ONLINE
+  BLOCKED
+
+  @@map("admission_event_result")
+}
+
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+
+  @@map("ledger_direction")
+}
+
+model User {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email           String         @unique
+  passwordHash    String         @map("password_hash")
+  role            UserRole       @default(CUSTOMER)
+  isActive        Boolean        @default(true) @map("is_active")
+  emailVerifiedAt DateTime?      @map("email_verified_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at")
+  organizers      Organizer[]
+  orders          Order[]
+  reservations    TicketReservation[]
+  tickets         Ticket[]
+  devices         UserDevice[]
+  audits          AuditLog[]
+  authAuditLogs   AuthAuditLog[]
+  adminSupportAuditLogs AdminSupportAuditLog[]
+  sessions        Session[]
+  keys            IdempotencyKey[]
+  paymentIntents  PaymentIntent[]
+  paymentIntentAudits PaymentIntentAuditLog[]
+  ticketIssuanceAudits TicketIssuanceAuditLog[] @relation("TicketIssuanceAuditBuyer")
+  admissionScanAudits AdmissionScanAudit[] @relation("AdmissionScanAuditScannedBy")
+  tableReservations TableReservation[]
+  tableAuditLogs TableAuditLog[]
+
+  @@index([role], map: "idx_users_role")
+  @@index([emailVerifiedAt], map: "idx_users_email_verified_at")
+  @@map("users")
+}
+
+model Organizer {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerUserId  String          @map("owner_user_id") @db.Uuid
+  displayName  String          @map("display_name")
+  slug         String          @unique
+  description  String?
+  status       OrganizerStatus @default(DRAFT)
+  contactEmail String?         @map("contact_email")
+  contactPhone String?         @map("contact_phone")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @default(now()) @updatedAt @map("updated_at")
+  owner        User            @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  events       Event[]
+  paymentIntents PaymentIntent[]
+  tickets      Ticket[]
+  ticketIssuanceAudits TicketIssuanceAuditLog[]
+  admissionScanAudits AdmissionScanAudit[]
+  floorSections VenueFloorSection[]
+  venueTables   VenueTable[]
+  eventTables   EventTable[]
+  tableReservations TableReservation[]
+
+  @@index([ownerUserId], map: "idx_organizers_owner_user_id")
+  @@index([status], map: "idx_organizers_status")
+  @@index([slug], map: "idx_organizers_slug")
+  @@map("organizers")
+}
+
+model Session {
+  id               String        @id @default(cuid())
+  userId           String        @map("user_id") @db.Uuid
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash         String?       @map("refresh_token_hash")
+  /// Stores the hash of the immediately preceding refresh token to enable single-depth replay detection. Cleared on session revocation.
+  previousRefreshTokenHash String?       @map("previous_refresh_token_hash")
+  status           SessionStatus @default(ACTIVE)
+  /// Pilot policy: deviceId is mandatory for both login and refresh flows.
+  deviceId         String        @map("device_id")
+  userAgent        String?       @map("user_agent")
+  ipAddress        String?       @map("ip_address")
+  lastSeenAt       DateTime      @default(now()) @map("last_seen_at")
+  expiresAt        DateTime      @map("expires_at")
+  revokedAt        DateTime?     @map("revoked_at")
+  revokedReason    String?       @map("revoked_reason")
+  refreshTokenVersion Int        @default(0) @map("refresh_token_version")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  @@index([userId, status], map: "idx_sessions_user_status")
+  @@index([userId], map: "idx_sessions_user_id")
+  @@index([userId, revokedAt], map: "idx_sessions_user_revoked_at")
+  @@index([expiresAt], map: "idx_sessions_expires_at")
+  @@index([deviceId], map: "idx_sessions_device_id")
+  @@index([refreshTokenHash], map: "idx_sessions_refresh_token_hash")
+  @@index([previousRefreshTokenHash], map: "idx_sessions_previous_refresh_token_hash")
+  @@map("sessions")
+}
+
+model AuthAuditLog {
+  id        String          @id @default(cuid())
+  userId    String?         @map("user_id") @db.Uuid
+  user      User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    AuthAuditAction
+  email     String?
+  sessionId String?         @map("session_id")
+  ipAddress String?         @map("ip_address")
+  userAgent String?         @map("user_agent")
+  success   Boolean
+  reason    String?
+  metadata  Json?
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  @@index([userId, action], map: "idx_auth_audit_logs_user_action")
+  @@index([email], map: "idx_auth_audit_logs_email")
+  @@index([createdAt], map: "idx_auth_audit_logs_created_at")
+  @@map("auth_audit_logs")
+}
+
+model AdminSupportAuditLog {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId String            @map("actor_user_id") @db.Uuid
+  action      String
+  status      AdminActionStatus
+  targetType  String?           @map("target_type")
+  targetId    String?           @map("target_id") @db.Uuid
+  reasonCode  String            @map("reason_code")
+  reasonNote  String?           @map("reason_note")
+  metadata    Json?
+  createdAt   DateTime          @default(now()) @map("created_at")
+  actor       User              @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([actorUserId], map: "idx_admin_support_audit_logs_actor_user_id")
+  @@index([action], map: "idx_admin_support_audit_logs_action")
+  @@index([status], map: "idx_admin_support_audit_logs_status")
+  @@index([targetType], map: "idx_admin_support_audit_logs_target_type")
+  @@index([targetId], map: "idx_admin_support_audit_logs_target_id")
+  @@index([reasonCode], map: "idx_admin_support_audit_logs_reason_code")
+  @@index([createdAt], map: "idx_admin_support_audit_logs_created_at")
+  @@map("admin_support_audit_logs")
+}
+
+model Venue {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  events    Event[]
+  gates     Gate[]
+
+  @@map("venues")
+}
+
+model VenueFloorSection {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizerId String     @map("organizer_id") @db.Uuid
+  name        String
+  description String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
+  organizer   Organizer  @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  tables      VenueTable[]
+
+  @@index([organizerId])
+  @@unique([organizerId, name])
+  @@map("venue_floor_sections")
+}
+
+model VenueTable {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizerId    String           @map("organizer_id") @db.Uuid
+  floorSectionId String?          @map("floor_section_id") @db.Uuid
+  label          String
+  seatCount      Int              @map("seat_count")
+  status         VenueTableStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @default(now()) @updatedAt @map("updated_at")
+  organizer      Organizer        @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  floorSection   VenueFloorSection? @relation(fields: [floorSectionId], references: [id], onDelete: SetNull)
+  eventTables    EventTable[]
+
+  @@index([organizerId])
+  @@index([floorSectionId])
+  @@index([status])
+  @@unique([organizerId, label])
+  @@map("venue_tables")
+}
+
+model Event {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizerId   String          @map("organizer_id") @db.Uuid
+  venueId       String          @map("venue_id") @db.Uuid
+  title         String          @map("name")
+  slug          String
+  description   String?
+  status        EventStatus     @default(DRAFT)
+  visibility    EventVisibility @default(PRIVATE)
+  category      EventCategory   @default(OTHER)
+  startsAt      DateTime        @map("starts_at")
+  endsAt        DateTime        @map("ends_at")
+  timezone      String          @default("Africa/Accra")
+  venueName     String?         @map("venue_name")
+  addressLine1  String?         @map("address_line_1")
+  addressLine2  String?         @map("address_line_2")
+  city          String?
+  region        String?
+  country       String          @default("Ghana")
+  latitude      Decimal?        @db.Decimal(10, 7)
+  longitude     Decimal?        @db.Decimal(10, 7)
+  capacityTotal Int?            @map("capacity_total")
+  capacityHeld  Int             @default(0) @map("capacity_held")
+  paymentEnabled Boolean        @default(false) @map("payment_enabled")
+  priceMinor    Int?            @map("price_minor")
+  priceCurrency String          @default("GHS") @map("price_currency")
+  publishedAt   DateTime?       @map("published_at")
+  cancelledAt   DateTime?       @map("cancelled_at")
+  archivedAt    DateTime?       @map("archived_at")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @default(now()) @updatedAt @map("updated_at")
+  organizer     Organizer       @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  venue         Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  ticketTypes   TicketType[]
+  inventories   EventTicketInventory[]
+  reservations  TicketReservation[]
+  orders        Order[]
+  tickets       Ticket[]
+  paymentIntents PaymentIntent[]
+  ticketIssuanceAudits TicketIssuanceAuditLog[]
+  admissionScanAudits AdmissionScanAudit[]
+  eventTables   EventTable[]
+  tableReservations TableReservation[]
+
+  @@unique([organizerId, slug], map: "uq_events_organizer_slug")
+  @@index([organizerId], map: "idx_events_organizer")
+  @@index([status], map: "idx_events_status")
+  @@index([visibility], map: "idx_events_visibility")
+  @@index([category], map: "idx_events_category")
+  @@index([startsAt], map: "idx_events_starts_at")
+  @@index([city], map: "idx_events_city")
+  @@index([country], map: "idx_events_country")
+  @@index([venueId], map: "idx_events_venue")
+  @@map("events")
+}
+
+model EventTable {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizerId   String           @map("organizer_id") @db.Uuid
+  eventId       String           @map("event_id") @db.Uuid
+  venueTableId  String           @map("venue_table_id") @db.Uuid
+  status        EventTableStatus @default(AVAILABLE)
+  priceMinor    Int              @map("price_minor")
+  currency      String
+  holdExpiresAt DateTime?        @map("hold_expires_at")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @default(now()) @updatedAt @map("updated_at")
+  organizer     Organizer        @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  event         Event            @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  venueTable    VenueTable       @relation(fields: [venueTableId], references: [id], onDelete: Restrict)
+  reservations  TableReservation[]
+
+  @@index([organizerId])
+  @@index([eventId])
+  @@index([venueTableId])
+  @@index([status])
+  @@index([holdExpiresAt])
+  @@unique([eventId, venueTableId])
+  @@map("event_tables")
+}
+
+model TableReservation {
+  id                     String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId            String                 @map("actor_user_id") @db.Uuid
+  organizerId            String                 @map("organizer_id") @db.Uuid
+  eventId                String                 @map("event_id") @db.Uuid
+  eventTableId           String                 @map("event_table_id") @db.Uuid
+  status                 TableReservationStatus @default(HELD)
+  amountMinor            Int                    @map("amount_minor")
+  currency               String
+  idempotencyUseCase     String                 @default("tables.hold") @map("idempotency_use_case")
+  idempotencyKeyHash     String                 @map("idempotency_key_hash")
+  requestFingerprintHash String                 @map("request_fingerprint_hash")
+  holdExpiresAt          DateTime               @map("hold_expires_at")
+  cancelledAt            DateTime?              @map("cancelled_at")
+  expiredAt              DateTime?              @map("expired_at")
+  createdAt              DateTime               @default(now()) @map("created_at")
+  updatedAt              DateTime               @default(now()) @updatedAt @map("updated_at")
+  actor                  User                   @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  organizer              Organizer              @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  event                  Event                  @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  eventTable             EventTable             @relation(fields: [eventTableId], references: [id], onDelete: Restrict)
+
+  @@index([actorUserId])
+  @@index([organizerId])
+  @@index([eventId])
+  @@index([eventTableId])
+  @@index([status])
+  @@index([holdExpiresAt])
+  @@unique([actorUserId, idempotencyUseCase, idempotencyKeyHash])
+  @@map("table_reservations")
+}
+
+model TableAuditLog {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId   String?         @map("actor_user_id") @db.Uuid
+  organizerId   String?         @map("organizer_id") @db.Uuid
+  eventId       String?         @map("event_id") @db.Uuid
+  venueTableId  String?         @map("venue_table_id") @db.Uuid
+  eventTableId  String?         @map("event_table_id") @db.Uuid
+  reservationId String?         @map("reservation_id") @db.Uuid
+  event         TableAuditEvent
+  reason        String?
+  metadata      Json?
+  createdAt     DateTime        @default(now()) @map("created_at")
+  actor         User?           @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId])
+  @@index([organizerId])
+  @@index([eventId])
+  @@index([venueTableId])
+  @@index([eventTableId])
+  @@index([reservationId])
+  @@index([event])
+  @@index([createdAt])
+  @@map("table_audit_logs")
+}
+
+model TicketType {
+  id           String                 @id @db.Uuid
+  eventId      String                 @map("event_id") @db.Uuid
+  name         String
+  createdAt    DateTime               @default(now()) @map("created_at")
+  event        Event                  @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  inventories  EventTicketInventory[]
+  reservations TicketReservation[]
+  tickets      Ticket[]
+
+  @@unique([id, eventId], map: "uq_ticket_types_id_event")
+  @@unique([eventId, name], map: "uq_ticket_types_event_name")
+  @@map("ticket_types")
+}
+
+model EventTicketInventory {
+  id            String     @id @db.Uuid
+  eventId       String     @map("event_id") @db.Uuid
+  ticketTypeId  String     @map("ticket_type_id") @db.Uuid
+  capacityTotal Int        @map("capacity_total")
+  reservedCount Int        @default(0) @map("reserved_count")
+  soldCount     Int        @default(0) @map("sold_count")
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at")
+  event         Event      @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  ticketType    TicketType @relation(fields: [ticketTypeId, eventId], references: [id, eventId], onDelete: Restrict)
+
+  @@unique([eventId, ticketTypeId])
+  @@map("event_ticket_inventory")
+}
+
+model TicketReservation {
+  id           String            @id @db.Uuid
+  ownerUserId  String            @map("owner_user_id") @db.Uuid
+  eventId      String            @map("event_id") @db.Uuid
+  ticketTypeId String            @map("ticket_type_id") @db.Uuid
+  quantity     Int
+  status       ReservationStatus
+  expiresAt    DateTime          @map("expires_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  owner        User              @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  event        Event             @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  ticketType   TicketType        @relation(fields: [ticketTypeId, eventId], references: [id, eventId], onDelete: Restrict)
+  orders       Order[]
+
+  @@index([ownerUserId], map: "idx_reservation_owner_user_id")
+  @@index([eventId, ticketTypeId], map: "idx_reservation_event_type")
+  @@index([expiresAt], map: "idx_reservation_expiry")
+  @@map("ticket_reservations")
+}
+
+model Order {
+  id            String             @id @db.Uuid
+  userId        String             @map("user_id") @db.Uuid
+  eventId       String             @map("event_id") @db.Uuid
+  reservationId String?            @map("reservation_id") @db.Uuid
+  status        OrderStatus
+  totalAmount   BigInt             @map("total_amount")
+  currency      String
+  createdAt     DateTime           @default(now()) @map("created_at")
+  user          User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  event         Event              @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  reservation   TicketReservation? @relation(fields: [reservationId], references: [id], onDelete: Restrict)
+  payments      Payment[]
+  tickets       Ticket[]
+  ledger        LedgerEntry[]
+
+  @@index([userId, eventId, createdAt(sort: Desc)], map: "idx_orders_user_event_created")
+  @@map("orders")
+}
+
+model Payment {
+  id          String        @id @db.Uuid
+  orderId     String        @map("order_id") @db.Uuid
+  provider    String
+  providerRef String?       @map("provider_ref")
+  status      PaymentStatus
+  amount      BigInt
+  createdAt   DateTime      @default(now()) @map("created_at")
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  ledger      LedgerEntry[]
+
+  @@unique([provider, providerRef])
+  @@index([orderId], map: "idx_payments_order")
+  @@index([status], map: "idx_payments_status")
+  @@map("payments")
+}
+
+model PaymentIntent {
+  id                     String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyerUserId            String              @map("buyer_user_id") @db.Uuid
+  organizerId            String              @map("organizer_id") @db.Uuid
+  eventId                String              @map("event_id") @db.Uuid
+  provider               PaymentProvider
+  status                 PaymentIntentStatus @default(INITIATION_PENDING)
+  amountMinor            Int                 @map("amount_minor")
+  currency               String
+  idempotencyUseCase     String              @default("payments.initiate") @map("idempotency_use_case")
+  idempotencyKeyHash     String              @map("idempotency_key_hash")
+  requestFingerprintHash String              @map("request_fingerprint_hash")
+  providerReference      String              @unique(map: "uq_payment_intents_provider_reference") @map("provider_reference")
+  providerCheckoutUrl    String?             @map("provider_checkout_url")
+  providerAccessCode     String?             @map("provider_access_code")
+  providerRawResponse    Json?               @map("provider_raw_response")
+  failureCode            String?             @map("failure_code")
+  failureMessage         String?             @map("failure_message")
+  initiatedAt            DateTime?           @map("initiated_at")
+  verifiedAt             DateTime?           @map("verified_at")
+  failedAt               DateTime?           @map("failed_at")
+  providerVerifiedStatus String?             @map("provider_verified_status")
+  providerVerifiedAmount Int?                @map("provider_verified_amount")
+  providerVerifiedCurrency String?           @map("provider_verified_currency")
+  providerVerificationRaw Json?              @map("provider_verification_raw")
+  createdAt              DateTime            @default(now()) @map("created_at")
+  updatedAt              DateTime            @default(now()) @updatedAt @map("updated_at")
+  buyer                  User                @relation(fields: [buyerUserId], references: [id], onDelete: Restrict)
+  organizer              Organizer           @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  event                  Event               @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  auditLogs              PaymentIntentAuditLog[]
+  webhookEvents          ProviderWebhookEvent[]
+  tickets                Ticket[]
+  ticketIssuanceAudits   TicketIssuanceAuditLog[]
+
+  @@unique([buyerUserId, idempotencyUseCase, idempotencyKeyHash], map: "uq_payment_intents_buyer_use_case_key")
+  @@index([buyerUserId, createdAt(sort: Desc)], map: "idx_payment_intents_buyer_created")
+  @@index([organizerId, createdAt(sort: Desc)], map: "idx_payment_intents_organizer_created")
+  @@index([eventId, createdAt(sort: Desc)], map: "idx_payment_intents_event_created")
+  @@index([status, createdAt(sort: Desc)], map: "idx_payment_intents_status_created")
+  @@index([provider, createdAt(sort: Desc)], map: "idx_payment_intents_provider_created")
+  @@map("payment_intents")
+}
+
+model PaymentIntentAuditLog {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentIntentId String        @map("payment_intent_id") @db.Uuid
+  buyerUserId     String        @map("buyer_user_id") @db.Uuid
+  eventType       String        @map("event_type")
+  data            Json
+  createdAt       DateTime      @default(now()) @map("created_at")
+  paymentIntent   PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Cascade)
+  buyer           User          @relation(fields: [buyerUserId], references: [id], onDelete: Restrict)
+
+  @@index([paymentIntentId, createdAt(sort: Desc)], map: "idx_payment_intent_audits_intent_created")
+  @@index([buyerUserId, createdAt(sort: Desc)], map: "idx_payment_intent_audits_buyer_created")
+  @@map("payment_intent_audit_logs")
+}
+
+model ProviderWebhookEvent {
+  id               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider         PaymentProvider
+  providerEventId  String                  @map("provider_event_id")
+  providerReference String?                @map("provider_reference")
+  payloadHash      String                  @map("payload_hash")
+  signatureValid   Boolean?                @map("signature_valid")
+  processingStatus WebhookProcessingStatus @default(RECEIVED) @map("processing_status")
+  failureCode      String?                 @map("failure_code")
+  failureMessage   String?                 @map("failure_message")
+  rawHeaders       Json                    @map("raw_headers")
+  rawPayload       String                  @map("raw_payload")
+  verifiedPayload  Json?                   @map("verified_payload")
+  paymentIntentId  String?                 @map("payment_intent_id") @db.Uuid
+  receivedAt       DateTime                @default(now()) @map("received_at")
+  processedAt      DateTime?               @map("processed_at")
+  paymentIntent    PaymentIntent?          @relation(fields: [paymentIntentId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerEventId], map: "uq_provider_webhook_events_provider_event")
+  @@unique([provider, payloadHash], map: "uq_provider_webhook_events_provider_payload_hash")
+  @@index([provider], map: "idx_provider_webhook_events_provider")
+  @@index([providerReference], map: "idx_provider_webhook_events_reference")
+  @@index([paymentIntentId], map: "idx_provider_webhook_events_payment_intent")
+  @@index([processingStatus], map: "idx_provider_webhook_events_processing_status")
+  @@index([receivedAt], map: "idx_provider_webhook_events_received_at")
+  @@map("provider_webhook_events")
+}
+
+model LedgerEntry {
+  id            String          @id @db.Uuid
+  orderId       String?         @map("order_id") @db.Uuid
+  paymentId     String?         @map("payment_id") @db.Uuid
+  direction     LedgerDirection
+  accountType   String          @map("account_type")
+  amount        BigInt
+  currency      String
+  correlationId String?         @map("correlation_id") @db.Uuid
+  createdAt     DateTime        @default(now()) @map("created_at")
+  order         Order?          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  payment       Payment?        @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([orderId], map: "idx_ledger_order")
+  @@index([paymentId], map: "idx_ledger_payment")
+  @@map("ledger_entries")
+}
+
+model Ticket {
+  id              String                @id @db.Uuid
+  ticketNumber    String?               @unique(map: "uq_tickets_ticket_number") @map("ticket_number")
+  eventId         String                @map("event_id") @db.Uuid
+  organizerId     String?               @map("organizer_id") @db.Uuid
+  ticketTypeId    String?               @map("ticket_type_id") @db.Uuid
+  ownerUserId     String                @map("owner_user_id") @db.Uuid
+  orderId         String?               @map("order_id") @db.Uuid
+  paymentIntentId String?               @map("payment_intent_id") @db.Uuid
+  status          TicketStatus          @default(ISSUED)
+  admissionTokenHash String?            @unique(map: "uq_tickets_admission_token_hash") @map("admission_token_hash")
+  admissionTokenVersion Int             @default(1) @map("admission_token_version")
+  ticketSerial    String                @map("ticket_serial")
+  publicReference String                @map("public_reference")
+  issuedAt        DateTime              @default(now()) @map("issued_at")
+  usedAt          DateTime?             @map("used_at")
+  voidedAt        DateTime?             @map("voided_at")
+  expiresAt       DateTime?             @map("expires_at")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @default(now()) @updatedAt @map("updated_at")
+  event           Event                 @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  organizer       Organizer?            @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  ticketType      TicketType?           @relation(fields: [ticketTypeId, eventId], references: [id, eventId], onDelete: Restrict)
+  owner           User                  @relation(fields: [ownerUserId], references: [id], onDelete: Restrict)
+  order           Order?                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentIntent   PaymentIntent?        @relation(fields: [paymentIntentId], references: [id], onDelete: SetNull)
+  admissionState  TicketAdmissionState?
+  admissionLogs   AdmissionEvent[]
+  admissionScans  AdmissionScanAudit[]
+  issuanceAudits  TicketIssuanceAuditLog[]
+  suspiciousFlags TicketRiskFlag[]
+  suspiciousLogs  SuspiciousEvent[]
+  offlineScans    OfflineScanEvent[]
+
+  @@unique([ticketSerial], map: "uq_ticket_serial")
+  @@unique([publicReference], map: "uq_ticket_public_ref")
+  @@unique([paymentIntentId, ownerUserId, eventId], map: "uq_tickets_payment_owner_event")
+  @@index([eventId], map: "idx_tickets_event")
+  @@index([ownerUserId], map: "idx_tickets_owner")
+  @@index([organizerId], map: "idx_tickets_organizer")
+  @@index([paymentIntentId], map: "idx_tickets_payment_intent")
+  @@index([status], map: "idx_tickets_status")
+  @@index([issuedAt], map: "idx_tickets_issued_at")
+  @@map("tickets")
+}
+
+model TicketIssuanceAuditLog {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentIntentId String        @map("payment_intent_id") @db.Uuid
+  ticketId        String?       @map("ticket_id") @db.Uuid
+  buyerUserId     String        @map("buyer_user_id") @db.Uuid
+  eventId         String        @map("event_id") @db.Uuid
+  organizerId     String        @map("organizer_id") @db.Uuid
+  auditEvent      String        @map("audit_event")
+  reason          String?
+  metadata        Json?
+  createdAt       DateTime      @default(now()) @map("created_at")
+  paymentIntent   PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  ticket          Ticket?       @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  buyer           User          @relation("TicketIssuanceAuditBuyer", fields: [buyerUserId], references: [id], onDelete: Restrict)
+  event           Event         @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  organizer       Organizer     @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+
+  @@index([paymentIntentId], map: "idx_ticket_issuance_audit_payment_intent")
+  @@index([ticketId], map: "idx_ticket_issuance_audit_ticket")
+  @@index([buyerUserId], map: "idx_ticket_issuance_audit_buyer")
+  @@index([eventId], map: "idx_ticket_issuance_audit_event")
+  @@index([organizerId], map: "idx_ticket_issuance_audit_organizer")
+  @@index([auditEvent], map: "idx_ticket_issuance_audit_event_type")
+  @@index([createdAt], map: "idx_ticket_issuance_audit_created_at")
+  @@map("ticket_issuance_audit_logs")
+}
+
+model AdmissionScanAudit {
+  id              String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId        String?                  @map("ticket_id") @db.Uuid
+  eventId         String?                  @map("event_id") @db.Uuid
+  organizerId     String?                  @map("organizer_id") @db.Uuid
+  scannedByUserId String?                  @map("scanned_by_user_id") @db.Uuid
+  status          AdmissionScanStatus
+  rejectionReason AdmissionRejectionReason? @map("rejection_reason")
+  tokenHash       String?                  @map("token_hash")
+  scanNonceHash   String?                  @map("scan_nonce_hash")
+  deviceId        String?                  @map("device_id")
+  gateLabel       String?                  @map("gate_label")
+  metadata        Json?
+  scannedAt       DateTime                 @default(now()) @map("scanned_at")
+  ticket          Ticket?                  @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  event           Event?                   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  organizer       Organizer?               @relation(fields: [organizerId], references: [id], onDelete: SetNull)
+  scannedBy       User?                    @relation("AdmissionScanAuditScannedBy", fields: [scannedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([ticketId], map: "idx_admission_scan_audit_ticket")
+  @@index([eventId], map: "idx_admission_scan_audit_event")
+  @@index([organizerId], map: "idx_admission_scan_audit_organizer")
+  @@index([scannedByUserId], map: "idx_admission_scan_audit_scanned_by")
+  @@index([status], map: "idx_admission_scan_audit_status")
+  @@index([rejectionReason], map: "idx_admission_scan_audit_rejection_reason")
+  @@index([tokenHash], map: "idx_admission_scan_audit_token_hash")
+  @@index([scanNonceHash], map: "idx_admission_scan_audit_scan_nonce_hash")
+  @@index([scannedAt], map: "idx_admission_scan_audit_scanned_at")
+  @@map("admission_scan_audits")
+}
+
+model TicketAdmissionState {
+  ticketId         String         @id @map("ticket_id") @db.Uuid
+  currentState     AdmissionState @map("current_state")
+  admissionCycleNo Int            @default(0) @map("admission_cycle_no")
+  lastEntryAt      DateTime?      @map("last_entry_at")
+  lastExitAt       DateTime?      @map("last_exit_at")
+  version          Int            @default(0)
+  ticket           Ticket         @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+
+  @@index([currentState], map: "idx_admission_state_status")
+  @@map("ticket_admission_state")
+}
+
+model Gate {
+  id              String           @id @db.Uuid
+  venueId         String           @map("venue_id") @db.Uuid
+  label           String
+  createdAt       DateTime         @default(now()) @map("created_at")
+  venue           Venue            @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  admissionEvents AdmissionEvent[]
+
+  @@unique([venueId, label], map: "uq_gates_venue_label")
+  @@map("gates")
+}
+
+model AdmissionEvent {
+  id          String               @id @db.Uuid
+  scanEventId String?              @unique @map("scan_event_id") @db.Uuid
+  ticketId    String               @map("ticket_id") @db.Uuid
+  admissionCycleNo Int             @default(0) @map("admission_cycle_no")
+  direction   AdmissionDirection
+  result      AdmissionEventResult
+  scannedAt   DateTime             @map("scanned_at")
+  gateId      String?              @map("gate_id") @db.Uuid
+  createdAt   DateTime             @default(now()) @map("created_at")
+  ticket      Ticket               @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  gate        Gate?                @relation(fields: [gateId], references: [id], onDelete: Restrict)
+
+  @@index([ticketId], map: "idx_admission_ticket")
+  @@index([ticketId, scannedAt(sort: Desc)], map: "idx_admission_event_time")
+  @@map("admission_events")
+}
+
+model UserDevice {
+  id                String             @id @db.Uuid
+  userId            String?            @map("user_id") @db.Uuid
+  deviceFingerprint String             @map("device_fingerprint")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  user              User?              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  suspiciousEvents  SuspiciousEvent[]
+  offlineScans      OfflineScanEvent[]
+  riskFlags         DeviceRiskFlag[]
+
+  @@unique([userId, deviceFingerprint], map: "uq_user_device_fingerprint")
+  @@map("user_devices")
+}
+
+model OfflineScanEvent {
+  scanEventId          String      @id @map("scan_event_id") @db.Uuid
+  ticketId             String?     @map("ticket_id") @db.Uuid
+  deviceId             String?     @map("device_id") @db.Uuid
+  direction            String?
+  localTimestamp       DateTime?   @map("local_timestamp")
+  serverReceivedAt     DateTime    @default(now()) @map("server_received_at")
+  reconciliationStatus String      @map("reconciliation_status")
+  ticket               Ticket?     @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  device               UserDevice? @relation(fields: [deviceId], references: [id], onDelete: Restrict)
+
+  @@index([ticketId], map: "idx_offline_ticket")
+  @@index([reconciliationStatus], map: "idx_offline_reconcile_status")
+  @@map("offline_scan_events")
+}
+
+model IdempotencyKey {
+  actorUserId        String   @map("actor_user_id") @db.Uuid
+  useCase            String   @map("use_case")
+  idempotencyKeyHash String   @map("idempotency_key_hash")
+  requestHash        String   @map("request_hash")
+  responseCode       Int?     @map("response_code")
+  responseBody       Json?    @map("response_body")
+  createdAt          DateTime @default(now()) @map("created_at")
+  actor              User     @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@id([actorUserId, useCase, idempotencyKeyHash])
+  @@index([actorUserId], map: "idx_idempotency_actor_user_id")
+  @@index([useCase], map: "idx_idempotency_use_case")
+  @@index([idempotencyKeyHash], map: "idx_idempotency_key_hash")
+  @@map("idempotency_keys")
+}
+
+model AuditLog {
+  id            String   @id @db.Uuid
+  actorId       String?  @map("actor_id") @db.Uuid
+  action        String
+  entityType    String   @map("entity_type")
+  entityId      String   @map("entity_id") @db.Uuid
+  correlationId String?  @map("correlation_id") @db.Uuid
+  metadata      Json
+  createdAt     DateTime @default(now()) @map("created_at")
+  actor         User?    @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@map("audit_logs")
+}
+
+model SuspiciousEvent {
+  id        String      @id @db.Uuid
+  eventType String      @map("event_type")
+  ticketId  String?     @map("ticket_id") @db.Uuid
+  deviceId  String?     @map("device_id") @db.Uuid
+  severity  String?
+  metadata  Json
+  createdAt DateTime    @default(now()) @map("created_at")
+  ticket    Ticket?     @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  device    UserDevice? @relation(fields: [deviceId], references: [id], onDelete: Restrict)
+
+  @@map("suspicious_events")
+}
+
+model DeviceRiskFlag {
+  id        String     @id @db.Uuid
+  deviceId  String     @map("device_id") @db.Uuid
+  riskType  String     @map("risk_type")
+  riskScore Int        @map("risk_score")
+  flaggedAt DateTime   @default(now()) @map("flagged_at")
+  device    UserDevice @relation(fields: [deviceId], references: [id], onDelete: Restrict)
+
+  @@index([deviceId], map: "idx_risk_device")
+  @@map("device_risk_flags")
+}
+
+model TicketRiskFlag {
+  id        String   @id @db.Uuid
+  ticketId  String   @map("ticket_id") @db.Uuid
+  riskType  String   @map("risk_type")
+  riskScore Int      @map("risk_score")
+  flaggedAt DateTime @default(now()) @map("flagged_at")
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+
+  @@index([ticketId], map: "idx_risk_ticket")
+  @@map("ticket_risk_flags")
+}
+
+model OutboxEvent {
+  id             String    @id @db.Uuid
+  aggregateType  String    @map("aggregate_type")
+  aggregateId    String    @map("aggregate_id") @db.Uuid
+  eventType      String    @map("event_type")
+  payload        Json
+  createdAt      DateTime  @default(now()) @map("created_at")
+  processed      Boolean   @default(false)
+  processedAt    DateTime? @map("processed_at")
+  retryCount     Int       @default(0) @map("retry_count")
+  nextAttemptAt  DateTime? @map("next_attempt_at")
+  lastErrorCode  String?   @map("last_error_code")
+  deadLetteredAt DateTime? @map("dead_lettered_at")
+
+  @@index([processed, deadLetteredAt, nextAttemptAt, createdAt], map: "idx_outbox_dispatch")
+  @@map("outbox_events")
+}
+
+/// Additional database-only constructs that Prisma does not model precisely enough
+/// for the critical paths remain owned by the SQL in prisma/migrations, not by
+/// schema.prisma alone.

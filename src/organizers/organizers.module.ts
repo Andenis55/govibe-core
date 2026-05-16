@@ -1,0 +1,1 @@
+export { OrganizersModule } from '../modules/organizers/organizers.module';

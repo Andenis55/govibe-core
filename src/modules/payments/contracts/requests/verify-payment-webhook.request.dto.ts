@@ -1,0 +1,1 @@
+export type VerifyPaymentWebhookRequestDto = Record<string, unknown>;

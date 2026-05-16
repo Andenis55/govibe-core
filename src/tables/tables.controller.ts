@@ -1,0 +1,1 @@
+export { TablesController } from '../modules/tables/controllers/tables.controller';

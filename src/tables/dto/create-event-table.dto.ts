@@ -1,0 +1,1 @@
+export { CreateEventTableDto } from '../../modules/tables/contracts/requests/create-event-table.dto';

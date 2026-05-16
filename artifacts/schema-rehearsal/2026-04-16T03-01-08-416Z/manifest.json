@@ -1,0 +1,48 @@
+{
+  "rehearsalId": "2026-04-16T03-01-08-416Z",
+  "startedAt": "2026-04-16T03:01:08.417Z",
+  "artifactDir": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-01-08-416Z",
+  "backupPath": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-01-08-416Z\\pre-deploy.dump",
+  "databaseUrl": "postgresql://postgres:***@localhost:5432/govibe",
+  "restoreDatabaseUrl": "postgresql://postgres:***@localhost:5432/govibe_restore",
+  "restoreAdminDatabaseUrl": "postgresql://postgres:***@localhost:5432/postgres",
+  "runPaymentSmoke": false,
+  "skipHttpChecks": true,
+  "steps": [
+    {
+      "name": "snapshot",
+      "status": "passed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-01-08-416Z\\logs\\snapshot.log"
+    },
+    {
+      "name": "prisma-migrate-status",
+      "status": "passed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-01-08-416Z\\logs\\prisma-migrate-status.log"
+    },
+    {
+      "name": "prisma-migrate-deploy",
+      "status": "passed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-01-08-416Z\\logs\\prisma-migrate-deploy.log"
+    },
+    {
+      "name": "prepare-restore-database",
+      "status": "passed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-01-08-416Z\\logs\\prepare-restore-database.log"
+    },
+    {
+      "name": "restore",
+      "status": "passed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-01-08-416Z\\logs\\restore.log"
+    },
+    {
+      "name": "restore-prisma-status",
+      "status": "passed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-01-08-416Z\\logs\\restore-prisma-status.log"
+    }
+  ],
+  "manualFollowUps": [
+    "Redeploy the previous application artifact using the environment deployment tooling after validating the restore target.",
+    "Re-run application health checks and pilot smoke checks against the previous artifact deployment before clearing the rehearsal."
+  ],
+  "completedAt": "2026-04-16T03:01:13.474Z"
+}

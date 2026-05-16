@@ -1,0 +1,1 @@
+export { Permissions } from '../../auth/decorators/permissions.decorator';

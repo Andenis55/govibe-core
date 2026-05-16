@@ -1,0 +1,38 @@
+{
+  "rehearsalId": "2026-04-16T03-00-26-349Z",
+  "startedAt": "2026-04-16T03:00:26.351Z",
+  "artifactDir": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-00-26-349Z",
+  "backupPath": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-00-26-349Z\\pre-deploy.dump",
+  "databaseUrl": "postgresql://postgres:***@localhost:5432/govibe",
+  "restoreDatabaseUrl": "postgresql://postgres:***@localhost:5432/govibe_restore",
+  "restoreAdminDatabaseUrl": "postgresql://postgres:***@localhost:5432/postgres",
+  "runPaymentSmoke": false,
+  "skipHttpChecks": true,
+  "steps": [
+    {
+      "name": "snapshot",
+      "status": "passed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-00-26-349Z\\logs\\snapshot.log"
+    },
+    {
+      "name": "prisma-migrate-status",
+      "status": "passed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-00-26-349Z\\logs\\prisma-migrate-status.log"
+    },
+    {
+      "name": "prisma-migrate-deploy",
+      "status": "passed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-00-26-349Z\\logs\\prisma-migrate-deploy.log"
+    },
+    {
+      "name": "prepare-restore-database",
+      "status": "failed",
+      "logFile": "C:\\Users\\alber\\govibe-core\\artifacts\\schema-rehearsal\\2026-04-16T03-00-26-349Z\\logs\\prepare-restore-database.log"
+    }
+  ],
+  "manualFollowUps": [
+    "Redeploy the previous application artifact using the environment deployment tooling after validating the restore target.",
+    "Re-run application health checks and pilot smoke checks against the previous artifact deployment before clearing the rehearsal."
+  ],
+  "completedAt": "2026-04-16T03:00:31.296Z"
+}

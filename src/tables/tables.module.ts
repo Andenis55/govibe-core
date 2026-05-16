@@ -1,0 +1,1 @@
+export { TablesModule } from '../modules/tables/tables.module';

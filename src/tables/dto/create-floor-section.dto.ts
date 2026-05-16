@@ -1,0 +1,1 @@
+export { CreateFloorSectionDto } from '../../modules/tables/contracts/requests/create-floor-section.dto';

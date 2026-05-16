@@ -1,0 +1,1 @@
+export { HoldTableDto } from '../../modules/tables/contracts/requests/hold-table.dto';

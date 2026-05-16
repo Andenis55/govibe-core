@@ -1,0 +1,23 @@
+# Pilot Readiness Validation Matrix
+
+> This document is a validation/evidence artifact only. It does not authorize launch, does not define a production runbook, does not perform deployment, and does not replace Final CTO approval.
+
+This matrix is validation-only. It is not launch authorization.
+
+| Gate ID | Gate description | Command/test evidence | Pass criteria | No-go trigger if failed | Status |
+| --- | --- | --- | --- | --- | --- |
+| PR-01 | Prisma generate passes | `npx prisma generate` | Command exits 0 and Prisma Client is generated | 1 | pass |
+| PR-02 | Focused WS8 reliability suites pass | `npx jest --runInBand test/reliability/critical-flows.reliability.spec.ts test/reliability/idempotency-concurrency.reliability.spec.ts test/reliability/provider-failures.reliability.spec.ts test/reliability/audit-fail-closed.reliability.spec.ts test/reliability/admission-replay.reliability.spec.ts test/reliability/health-readiness.reliability.spec.ts` | All WS8 suites pass | 3, 29 | pass |
+| PR-03 | Workstreams 1-8 regression passes | `npx jest --runInBand test/integration/authz/authz-boundaries.spec.ts test/organizer-event.integration-spec.ts test/e2e/orders/checkout.e2e-spec.ts test/e2e/payments/payments.e2e-spec.ts test/integration/purchase/purchase-flow.spec.ts test/payments-verification-webhooks.integration-spec.ts test/tickets-issuance-admissions.integration-spec.ts test/e2e/health/health.e2e-spec.ts test/e2e/health/readiness.spec.ts test/e2e/health/readiness-negative.e2e-spec.ts test/admin-support.integration-spec.ts test/reliability/critical-flows.reliability.spec.ts test/reliability/idempotency-concurrency.reliability.spec.ts test/reliability/provider-failures.reliability.spec.ts test/reliability/audit-fail-closed.reliability.spec.ts test/reliability/admission-replay.reliability.spec.ts test/reliability/health-readiness.reliability.spec.ts` | Full requested regression command exits 0 | 3 | pass |
+| PR-04 | Build passes | `npm run build` | Build exits 0 | 2 | pass |
+| PR-05 | Health readiness returns 503 when DB is unavailable | [health-readiness.reliability.spec.ts](../../test/reliability/health-readiness.reliability.spec.ts) | HTTP 503 and body.status = `not_ready` | 4 | pass |
+| PR-06 | No secret leak in health/support responses | [health-readiness.reliability.spec.ts](../../test/reliability/health-readiness.reliability.spec.ts), [audit-fail-closed.reliability.spec.ts](../../test/reliability/audit-fail-closed.reliability.spec.ts) | Seeded fake secrets absent from response JSON | 5, 13 | pass |
+| PR-07 | Duplicate payment initiation protected | [idempotency-concurrency.reliability.spec.ts](../../test/reliability/idempotency-concurrency.reliability.spec.ts) | Final PaymentIntent count and idempotency count are correct | 6 | pass |
+| PR-08 | Duplicate webhook protected | [idempotency-concurrency.reliability.spec.ts](../../test/reliability/idempotency-concurrency.reliability.spec.ts) | One terminal transition only; duplicate delivery does not duplicate effects | 7 | pass |
+| PR-09 | Duplicate ticket issuance protected | [idempotency-concurrency.reliability.spec.ts](../../test/reliability/idempotency-concurrency.reliability.spec.ts) | Final ticket count and issuance audit count remain bounded | 10 | pass |
+| PR-10 | Admission replay protected | [admission-replay.reliability.spec.ts](../../test/reliability/admission-replay.reliability.spec.ts) | First scan accepted, replay rejected, wrong token does not leak state | 11 | pass |
+| PR-11 | Admin/support reads audited and redacted | [admin-support.integration-spec.ts](../../test/admin-support.integration-spec.ts), [audit-fail-closed.reliability.spec.ts](../../test/reliability/audit-fail-closed.reliability.spec.ts) | Support reads are audited, redacted, and fail closed on audit insert failure | 13, 14, 15 | pass |
+| PR-12 | Provider mocks prove no live provider calls | [provider-failures.reliability.spec.ts](../../test/reliability/provider-failures.reliability.spec.ts) | Mock/spies catch provider calls; no live credential dependency | 16, 17 | pass |
+| PR-13 | No schema or migration changes | Evidence packet file list | No changes under `prisma/schema.prisma` or `prisma/migrations/` | 19, 20 | pass |
+| PR-14 | No business service changes | Evidence packet file list | No business service file changes in WS8 scope | 21 | pass |
+| PR-15 | Evidence packet complete | [ws8-evidence-packet-template.md](./ws8-evidence-packet-template.md) | All required sections completed and linked | 24, 27, 28 | pass |

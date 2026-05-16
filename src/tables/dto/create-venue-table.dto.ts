@@ -1,0 +1,1 @@
+export { CreateVenueTableDto } from '../../modules/tables/contracts/requests/create-venue-table.dto';

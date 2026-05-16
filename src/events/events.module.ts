@@ -1,0 +1,1 @@
+export { EventsModule } from '../modules/events/events.module';

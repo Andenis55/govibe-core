@@ -1,0 +1,1 @@
+export { CreateOrganizerRequestDto as CreateOrganizerDto } from '../../modules/organizers/contracts/requests/create-organizer.request.dto';

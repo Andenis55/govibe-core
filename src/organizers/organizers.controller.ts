@@ -1,0 +1,1 @@
+export { OrganizersController } from '../modules/organizers/controllers/organizers.controller';

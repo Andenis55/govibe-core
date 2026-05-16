@@ -1,0 +1,1 @@
+export { TableReservationResponseDto } from '../../modules/tables/contracts/responses/table-reservation-response.dto';

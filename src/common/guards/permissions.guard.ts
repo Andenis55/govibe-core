@@ -1,0 +1,1 @@
+export { PermissionsGuard } from '../../auth/guards/permissions.guard';

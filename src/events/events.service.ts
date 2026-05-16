@@ -1,0 +1,1 @@
+export { EventsService } from '../modules/events/application/events.service';

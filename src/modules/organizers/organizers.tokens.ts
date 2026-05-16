@@ -1,0 +1,1 @@
+export const ORGANIZER_REPOSITORY = 'OrganizerRepository';

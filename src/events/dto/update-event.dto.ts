@@ -1,0 +1,1 @@
+export { UpdateEventRequestDto as UpdateEventDto } from '../../modules/events/contracts/requests/update-event.request.dto';

@@ -1,0 +1,1 @@
+export { PrismaModule } from '../shared/prisma/prisma.module';

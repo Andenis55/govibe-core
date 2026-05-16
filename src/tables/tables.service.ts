@@ -1,0 +1,1 @@
+export { TablesService } from '../modules/tables/application/tables.service';

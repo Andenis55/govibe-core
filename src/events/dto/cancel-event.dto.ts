@@ -1,0 +1,1 @@
+export { CancelEventRequestDto as CancelEventDto } from '../../modules/events/contracts/requests/cancel-event.request.dto';

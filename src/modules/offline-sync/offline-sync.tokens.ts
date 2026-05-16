@@ -1,0 +1,1 @@
+export const OFFLINE_SCAN_REPOSITORY = 'OfflineScanRepository';

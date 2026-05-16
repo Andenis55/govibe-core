@@ -1,0 +1,1 @@
+export { CreateEventRequestDto as CreateEventDto } from '../../modules/events/contracts/requests/create-event.request.dto';

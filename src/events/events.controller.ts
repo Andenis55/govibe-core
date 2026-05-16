@@ -1,0 +1,1 @@
+export { EventsController } from '../modules/events/controllers/events.controller';

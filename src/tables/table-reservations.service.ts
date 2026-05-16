@@ -1,0 +1,1 @@
+export { TableReservationsService } from '../modules/tables/application/table-reservations.service';

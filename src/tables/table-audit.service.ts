@@ -1,0 +1,1 @@
+export { TableAuditService } from '../modules/tables/application/table-audit.service';

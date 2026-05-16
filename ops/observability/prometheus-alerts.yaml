@@ -1,0 +1,109 @@
+groups:
+  - name: govibe-pilot
+    rules:
+      - alert: GovibeReadinessFailures
+        expr: |
+          sum(rate(govibe_application_duration_milliseconds_count{metric_name="http.request.duration",route="/api/health/ready",status_code=~"5.."}[2m])) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: govibe-core
+        annotations:
+          summary: Govibe readiness endpoint is failing.
+          description: The ready endpoint is returning 5xx responses in production.
+
+      - alert: GovibeAdmissionsLatencyP95High
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(govibe_application_duration_milliseconds_bucket{metric_name="http.request.duration",route="/api/admissions/validate",method="POST"}[5m]))) > 750
+        for: 5m
+        labels:
+          severity: warning
+          service: govibe-core
+        annotations:
+          summary: Govibe admissions latency is elevated.
+          description: Admission validation p95 latency is above 750 ms for 5 minutes.
+
+      - alert: GovibeAdmissionsErrorRateHigh
+        expr: |
+          (
+            sum(rate(govibe_application_duration_milliseconds_count{metric_name="http.request.duration",route="/api/admissions/validate",method="POST",status_code=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(govibe_application_duration_milliseconds_count{metric_name="http.request.duration",route="/api/admissions/validate",method="POST"}[5m])), 1)
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          service: govibe-core
+        annotations:
+          summary: Govibe admissions 5xx rate is above threshold.
+          description: More than 1% of admission validation requests are failing with 5xx responses.
+
+      - alert: GovibePaymentsInitiateErrorRateHigh
+        expr: |
+          (
+            sum(rate(govibe_application_duration_milliseconds_count{metric_name="http.request.duration",route="/api/payments/initiate",method="POST",status_code=~"5.."}[10m]))
+            /
+            clamp_min(sum(rate(govibe_application_duration_milliseconds_count{metric_name="http.request.duration",route="/api/payments/initiate",method="POST"}[10m])), 1)
+          ) > 0.01
+        for: 10m
+        labels:
+          severity: critical
+          service: govibe-core
+        annotations:
+          summary: Govibe payment initiation 5xx rate is above threshold.
+          description: More than 1% of payment initiation requests are failing with 5xx responses.
+
+      - alert: GovibeWebhookUnauthorizedSpike
+        expr: |
+          increase(govibe_application_duration_milliseconds_count{metric_name="http.request.duration",route="/api/payments/webhooks/:provider",method="POST",status_code="401"}[5m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: govibe-core
+        annotations:
+          summary: Govibe webhook authentication failures are spiking.
+          description: More than three webhook requests were rejected with 401 in 5 minutes.
+
+      - alert: GovibeOutboxDeadLettered
+        expr: |
+          increase(govibe_application_events_total{event_name="outbox.processor.dispatch_failed",dead_letter="true"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: govibe-core
+        annotations:
+          summary: Govibe outbox has dead-lettered events.
+          description: At least one outbox event has been dead-lettered in the last 10 minutes.
+
+      - alert: GovibeOutboxDispatchFailuresGrowing
+        expr: |
+          increase(govibe_application_events_total{event_name="outbox.processor.dispatch_failed"}[10m]) > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: govibe-core
+        annotations:
+          summary: Govibe outbox dispatch failures are growing.
+          description: More than five outbox dispatch failures occurred in 10 minutes.
+
+      - alert: GovibeRedisDependencyDown
+        expr: |
+          govibe_application_gauges{metric_name="dependency.health",dependency="redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: govibe-core
+        annotations:
+          summary: Govibe Redis dependency health is down.
+          description: Redis health has been reported as down by the application.
+
+      - alert: GovibePostgresDependencyDown
+        expr: |
+          govibe_application_gauges{metric_name="dependency.health",dependency="postgres"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: govibe-core
+        annotations:
+          summary: Govibe Postgres dependency health is down.
+          description: Postgres health has been reported as down by the application.

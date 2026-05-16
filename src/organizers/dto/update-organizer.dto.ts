@@ -1,0 +1,1 @@
+export { UpdateOrganizerRequestDto as UpdateOrganizerDto } from '../../modules/organizers/contracts/requests/update-organizer.request.dto';

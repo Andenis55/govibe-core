@@ -1,0 +1,1 @@
+export { AUDIT_LOG_REPOSITORY } from './infrastructure/providers/audit.providers';

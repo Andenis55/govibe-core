@@ -1,0 +1,1 @@
+export { AccessTokenStrategy as JwtStrategy } from './access-token.strategy';

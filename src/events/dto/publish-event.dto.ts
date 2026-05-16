@@ -1,0 +1,1 @@
+export { PublishEventRequestDto as PublishEventDto } from '../../modules/events/contracts/requests/publish-event.request.dto';

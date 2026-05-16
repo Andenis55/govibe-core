@@ -1,0 +1,1 @@
+export { SubmitOrganizerRequestDto as SubmitOrganizerDto } from '../../modules/organizers/contracts/requests/submit-organizer.request.dto';
